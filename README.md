@@ -21,10 +21,8 @@ Version: Python3
 pip3 install -r requirements.txt
 ```
 ## :dolphin:运行截图
-> - **URL链接中获取UserID (注意:UserID是链接中的63692754272,而不是下面的抖音ID)**<br><br>
-![enter image description here](Pic/UserID.png)
 > - **运行下载**<br><br>
-![enter image description here](Pic/run.png
+![enter image description here](Pic/run.png)
 > - **下载完成**<br><br>
 ![enter image description here](Pic/video.png)
 ## :dolphin:**总结**
