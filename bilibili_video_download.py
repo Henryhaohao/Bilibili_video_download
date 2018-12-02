@@ -35,6 +35,8 @@ cid = re.search(r'cid=(\d+)&',html).group(1)
 title = re.search(r'<h1 title="(.*?)">',html).group(1)
 print('[下载视频的cid]:' +cid)
 print('[下载视频的标题]:' + title)
+# 清洗一下标题名称(不能有\ / : * ? " < > |)
+title = re.sub(r'[\/\\:*?"<>|]', '', title)  # 替换为空的
 
 #访问API地址
 # SEC1 = '1c15888dc316e05a15fdd0a02ed6584f' #flash反编译器破解的结果
