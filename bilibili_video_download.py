@@ -85,10 +85,10 @@ for i in video_list:
     ]
     urllib.request.install_opener(opener)
     #创建文件夹存放下载的视频
-    if not os.path.exists(r'F:\bilibili_video\{}'.format(title)):
-        os.makedirs(r'F:\bilibili_video\{}'.format(title))
+    if not os.path.exists(r'./bilibili_video/{}'.format(title)):
+        os.makedirs(r'./bilibili_video/{}'.format(title))
     #开始下载
-    urllib.request.urlretrieve(url=i,filename=r'F:\bilibili_video\{}\{}-{}.flv'.format(title,title,num))  #写成mp4也行  title + '-' + num + '.flv'
+    urllib.request.urlretrieve(url=i,filename=r'./bilibili_video/{}/{}-{}.flv'.format(title,title,num))  #写成mp4也行  title + '-' + num + '.flv'
     num +=1
 
 #合并视频
@@ -98,7 +98,7 @@ if len(video_list) >= 2:
     # 定义一个数组
     L = []
     # 访问 video 文件夹 (假设视频都放在这里面)
-    for root, dirs, files in os.walk(r'F:\bilibili_video\{}'.format(title)):
+    for root, dirs, files in os.walk(r'./bilibili_video/{}'.format(title)):
         # 按文件名排序
         files.sort()
         # 遍历所有文件
@@ -114,7 +114,7 @@ if len(video_list) >= 2:
     # 拼接视频
     final_clip = concatenate_videoclips(L)
     # 生成目标视频文件
-    final_clip.to_videofile(r'F:\bilibili_video\{}\{}.mp4'.format(title,title), fps=24, remove_temp=False)
+    final_clip.to_videofile(r'./bilibili_video/{}/{}.mp4'.format(title,title), fps=24, remove_temp=False)
     print('[视频合并完成]')
 
 else:
