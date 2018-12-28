@@ -10,7 +10,7 @@ __author__ = 'Henry'
 import requests,time,hashlib,urllib.request,re
 from xml.dom.minidom import parseString
 from moviepy.editor import *
-import os
+import os, sys
 
 #用户输入av号或者视频链接地址
 print('*'*30 + 'B站视频下载小助手' + '*'*30)
@@ -67,6 +67,40 @@ for i in durl:
     video_list.append(url_video)
 
 #下载视频
+def Schedule_cmd(blocknum, blocksize, totalsize):
+    speed = (blocknum * blocksize) / (time.time() - start_time)
+    # speed_str = " Speed: %.2f" % speed
+    speed_str = " Speed: %s" % format_size(speed)
+    recv_size = blocknum * blocksize
+
+    # 设置下载进度条
+    f = sys.stdout
+    pervent = recv_size / totalsize
+    percent_str = "%.2f%%" % (pervent * 100)
+    n = round(pervent * 50)
+    s = ('#' * n).ljust(50, '-')
+    f.write(percent_str.ljust(8, ' ') + '[' + s + ']' + speed_str)
+    f.flush()
+    # time.sleep(0.1)
+    f.write('\r')
+    
+# 字节bytes转化K\M\G
+def format_size(bytes):
+    try:
+        bytes = float(bytes)
+        kb = bytes / 1024
+    except:
+        print("传入的字节格式不对")
+        return "Error"
+    if kb >= 1024:
+        M = kb / 1024
+        if M >= 1024:
+            G = M / 1024
+            return "%.3fG" % (G)
+        else:
+            return "%.3fM" % (M)
+    else:
+        return "%.3fK" % (kb)
 print('[正在下载,请稍等...]:' + title)
 num = 1
 for i in video_list:
@@ -88,7 +122,8 @@ for i in video_list:
     if not os.path.exists(r'./bilibili_video/{}'.format(title)):
         os.makedirs(r'./bilibili_video/{}'.format(title))
     #开始下载
-    urllib.request.urlretrieve(url=i,filename=r'./bilibili_video/{}/{}-{}.flv'.format(title,title,num))  #写成mp4也行  title + '-' + num + '.flv'
+    start_time = time.time()
+    urllib.request.urlretrieve(url=i, filename=r'./bilibili_video/{}/{}-{}.flv'.format(title,title,num), reporthook=Schedule_cmd)  #写成mp4也行  title + '-' + num + '.flv'
     num +=1
 
 #合并视频
