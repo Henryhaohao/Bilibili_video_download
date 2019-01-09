@@ -29,4 +29,17 @@ pip3 install -r requirements.txt
 > **最后，如果你觉得这个项目不错或者对你有帮助，给个Star呗，也算是对我学习路上的一种鼓励！<br>
  哈哈哈，感谢大家！笔芯哟~**:cupid::cupid:
 
+## 补充
+
+### 报错及解决方法
+```
+raise NeedDownloadError('Need ffmpeg exe. '
+imageio.core.fetching.NeedDownloadError: Need ffmpeg exe. You can download it by calling:
+imageio.plugins.ffmpeg.download()
+```
+需要命令行下执行如下安装ffmpeg
+```
+import imageio
+imageio.plugins.ffmpeg.download()
+```
 
