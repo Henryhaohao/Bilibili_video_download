@@ -135,7 +135,14 @@ if len(video_list) >= 2:
     # 访问 video 文件夹 (假设视频都放在这里面)
     for root, dirs, files in os.walk(r'./bilibili_video/{}'.format(title)):
         # 按文件名排序
+        for i in range(len(files)):
+            files[i] = files[i].split('-')
+            files[i][2] = files[i][2].split('.')
+            files[i][2] = int(files[i][2][0])
         files.sort()
+        for i in range(len(files)):
+            files[i][2] = str(files[i][2])
+            files[i] = files[i][0] + '-' + files[i][1] + '-' + files[i][2] + '.flv'
         # 遍历所有文件
         for file in files:
             # 如果后缀名为 .mp4/.flv
