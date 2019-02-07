@@ -32,7 +32,7 @@ headers = {
 }
 html = requests.get(start_url,headers=headers).text
 cid = re.search(r'cid=(\d+)&',html).group(1)
-title = re.search(r'<h1 title="(.*?)">',html).group(1)
+title = re.search(r'<h1 title="(.*?)" class="video-title"',html).group(1)
 print('[下载视频的cid]:' +cid)
 print('[下载视频的标题]:' + title)
 # 清洗一下标题名称(不能有\ / : * ? " < > |)
@@ -160,7 +160,7 @@ if len(video_list) >= 2:
     print('[视频合并完成]')
 
 else:
-    #视频只有一段则直接打印下载完成
+    # 视频只有一段则直接打印下载完成
     print('[下载完成]:' + title)
 
-#拓展:分P视频:url相同,只是cid不同,通过url?p=1,2..分别找出每个分P的cid,带入请求得到下载地址
+# 拓展:分P视频:url相同,只是cid不同,通过url?p=1,2..分别找出每个分P的cid,带入请求得到下载地址
