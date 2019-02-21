@@ -10,7 +10,7 @@ __author__ = 'Henry'
 import requests,time,hashlib,urllib.request,re
 from xml.dom.minidom import parseString
 from moviepy.editor import *
-import os, sys
+import os, sys, json
 
 #用户输入av号或者视频链接地址
 print('*'*30 + 'B站视频下载小助手' + '*'*30)
@@ -39,34 +39,31 @@ print('[下载视频的标题]:' + title)
 title = re.sub(r'[\/\\:*?"<>|]', '', title)  # 替换为空的
 
 #访问API地址
-# SEC1 = '1c15888dc316e05a15fdd0a02ed6584f' #flash反编译器破解的结果
-SEC1 = '94aba54af9065f71de72f5508f1cd42e' #上面的SEC已经失效了
-ts = str(int(time.time())) #时间戳
-#清晰度:1080P:80 ;720P:64; 480P:32; 流畅:15 ;自动:0
-#quality在这好像并不能更改分辨率,无论quality填多少,下载的始终都是480P(853*480)
-# params = 'cid={}&player=1&quality=80&ts={}'.format(cid,ts)
-params = 'appkey=84956560bc028eb7&cid={}&otype=xml&qn={}&quality={}&type='.format(cid, quality, quality) #otype=json也行!!
-encrypt = hashlib.md5(bytes(params+SEC1,'utf-8')).hexdigest()
-url_api = 'https://interface.bilibili.com/v2/playurl?' + params + '&sign=' + encrypt
+entropy = 'rbMCKn@KuamXWlPMoJGsKcbiJKUfkPF_8dABscJntvqhRSETg'
+appkey, sec = ''.join([chr(ord(i) + 2) for i in entropy[::-1]]).split(':')
+params = 'appkey=%s&cid=%s&otype=json&qn=%s&quality=%s&type=' % (appkey, cid, quality, quality)
+chksum = hashlib.md5(bytes(params + sec, 'utf8')).hexdigest()
+url_api = 'https://interface.bilibili.com/v2/playurl?%s&sign=%s' % (params, chksum)
 headers = {
     'Referer':start_url,  #注意加上referer
     'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
 }
 # print(url_api)
-html = requests.get(url_api,headers=headers).text
-# print(html)
-
-#解析API返回的xml获取视频下载地址 (找出所有<durl>下的<url>标签,对于长视频,分割成了几个url,分别下载后再合并)
-doc = parseString(html.encode('utf8'))
-durl = doc.getElementsByTagName('durl')
-video_list = []
-for i in durl:
-    video = i.getElementsByTagName('url')[0]
-    url_video = video.childNodes[0].data
-    # print(url_video)
-    video_list.append(url_video)
+html = requests.get(url_api,headers=headers).json()
+# print(json.dumps(html))
+video_list = [html['durl'][0]['url']]
+# print(video_list)
 
 #下载视频
+'''
+ urllib.urlretrieve 的回调函数：
+def callbackfunc(blocknum, blocksize, totalsize):
+    @blocknum:  已经下载的数据块
+    @blocksize: 数据块的大小
+    @totalsize: 远程文件的大小
+'''
+
+
 def Schedule_cmd(blocknum, blocksize, totalsize):
     speed = (blocknum * blocksize) / (time.time() - start_time)
     # speed_str = " Speed: %.2f" % speed
@@ -83,7 +80,25 @@ def Schedule_cmd(blocknum, blocksize, totalsize):
     f.flush()
     # time.sleep(0.1)
     f.write('\r')
-    
+
+
+def Schedule(blocknum, blocksize, totalsize):
+    speed = (blocknum * blocksize) / (time.time() - start_time)
+    # speed_str = " Speed: %.2f" % speed
+    speed_str = " Speed: %s" % format_size(speed)
+    recv_size = blocknum * blocksize
+
+    # 设置下载进度条
+    f = sys.stdout
+    pervent = recv_size / totalsize
+    percent_str = "%.2f%%" % (pervent * 100)
+    n = round(pervent * 50)
+    s = ('#' * n).ljust(50, '-')
+    print(percent_str.ljust(6, ' ') + '-'+ speed_str)
+    f.flush()
+    time.sleep(2)
+    # print('\r')
+
 # 字节bytes转化K\M\G
 def format_size(bytes):
     try:
@@ -101,6 +116,7 @@ def format_size(bytes):
             return "%.3fM" % (M)
     else:
         return "%.3fK" % (kb)
+
 print('[正在下载,请稍等...]:' + title)
 num = 1
 for i in video_list:
@@ -119,11 +135,11 @@ for i in video_list:
     ]
     urllib.request.install_opener(opener)
     #创建文件夹存放下载的视频
-    if not os.path.exists(r'./bilibili_video/{}'.format(title)):
-        os.makedirs(r'./bilibili_video/{}'.format(title))
+    if not os.path.exists(r'F:\bilibili_video\{}'.format(title)):
+        os.makedirs(r'F:\bilibili_video\{}'.format(title))
     #开始下载
     start_time = time.time()
-    urllib.request.urlretrieve(url=i, filename=r'./bilibili_video/{}/{}-{}.flv'.format(title,title,num), reporthook=Schedule_cmd)  #写成mp4也行  title + '-' + num + '.flv'
+    urllib.request.urlretrieve(url=i,filename=r'F:\bilibili_video\{}\{}-{}.flv'.format(title,title,num), reporthook=Schedule_cmd)  #写成mp4也行  title + '-' + num + '.flv'
     num +=1
 
 #合并视频
@@ -133,7 +149,9 @@ if len(video_list) >= 2:
     # 定义一个数组
     L = []
     # 访问 video 文件夹 (假设视频都放在这里面)
-    for root, dirs, files in os.walk(r'./bilibili_video/{}'.format(title)):
+    for root, dirs, files in os.walk(r'F:\bilibili_video\{}'.format(title)):
+        # 按文件名排序
+        # files.sort()
         # 按文件名排序
         for i in range(len(files)):
             files[i] = files[i].split('-')
@@ -156,11 +174,11 @@ if len(video_list) >= 2:
     # 拼接视频
     final_clip = concatenate_videoclips(L)
     # 生成目标视频文件
-    final_clip.to_videofile(r'./bilibili_video/{}/{}.mp4'.format(title,title), fps=24, remove_temp=False)
+    final_clip.to_videofile(r'F:\bilibili_video\{}\{}.mp4'.format(title,title), fps=24, remove_temp=False)
     print('[视频合并完成]')
 
 else:
-    # 视频只有一段则直接打印下载完成
+    #视频只有一段则直接打印下载完成
     print('[下载完成]:' + title)
 
-# 拓展:分P视频:url相同,只是cid不同,通过url?p=1,2..分别找出每个分P的cid,带入请求得到下载地址
+#拓展:分P视频:url相同,只是cid不同,通过url?p=1,2..分别找出每个分P的cid,带入请求得到下载地址
