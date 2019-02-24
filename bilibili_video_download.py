@@ -149,17 +149,17 @@ if len(video_list) >= 2:
     # 定义一个数组
     L = []
     # 访问 video 文件夹 (假设视频都放在这里面)
-    for root, dirs, files in os.walk(r'F:\bilibili_video\{}'.format(title)):
-        # 遍历所有文件
-        for file in sorted(files, key=lambda x: int(x[x.rindex("-")+1:x.rindex(".")])):
-            # 如果后缀名为 .mp4/.flv
-            if os.path.splitext(file)[1] == '.flv':
-                # 拼接成完整路径
-                filePath = os.path.join(root, file)
-                # 载入视频
-                video = VideoFileClip(filePath)
-                # 添加到数组
-                L.append(video)
+    root_dir = r'F:\bilibili_video\{}'.format(title)
+    # 遍历所有文件
+    for file in sorted(os.listdir(root_dir), key=lambda x: int(x[x.rindex("-")+1:x.rindex(".")])):
+        # 如果后缀名为 .mp4/.flv
+        if os.path.splitext(file)[1] == '.flv':
+             # 拼接成完整路径
+             filePath = os.path.join(root_dir, file)
+             # 载入视频
+             video = VideoFileClip(filePath)
+             # 添加到数组
+             L.append(video)
     # 拼接视频
     final_clip = concatenate_videoclips(L)
     # 生成目标视频文件
