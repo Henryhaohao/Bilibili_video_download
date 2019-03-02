@@ -170,5 +170,7 @@ if len(video_list) >= 2:
 else:
     #视频只有一段则直接打印下载完成
     print('[下载完成]:' + title)
-
 #拓展:分P视频:url相同,只是cid不同,通过url?p=1,2..分别找出每个分P的cid,带入请求得到下载地址
+#如果是windows系统，下载完成后打开下载目录
+if(sys.platform.startswith('win')):
+    os.startfile(currentVideoPath)
