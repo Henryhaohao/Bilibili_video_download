@@ -118,7 +118,7 @@ def format_size(bytes):
         return "%.3fK" % (kb)
 
 print('[正在下载,请稍等...]:' + title)
-currentVideoPath = os.path.join(os.getcwd(),'bilibili_video',title)  #当前目录作为下载目录
+currentVideoPath = os.path.join(sys.path[0],'bilibili_video',title)  #当前目录作为下载目录
 num = 1
 for i in video_list:
     opener = urllib.request.build_opener()
