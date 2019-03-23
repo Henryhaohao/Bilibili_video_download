@@ -18,6 +18,8 @@ Bilibili(b站)视频下载 ![enter image description here](Pic/logo.png)
 Version: Python3
 ## :dolphin:安装依赖库
 ```
+brew install ffmpeg 
+
 pip3 install -r requirements.txt
 ```
 ## :dolphin:运行截图
