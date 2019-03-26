@@ -12,7 +12,7 @@ Bilibili(b站)视频下载 ![enter image description here](Pic/logo.png)
 ### 软件均仅用于学习交流，请勿用于任何商业用途！感谢大家！
 ## :dolphin:介绍
 ### 该项目为[Bilibili(b站)](https://www.bilibili.com/)视频下载
-- 项目介绍:通过传入B站av号或者视频链接地址下载视频
+- 项目介绍:通过传入B站av号或者视频链接地址下载视频(支持分P多段视频的下载!)
 - 爬虫文件:Spiders目录下的bilibili_video_download.py
 ## :dolphin:运行环境
 Version: Python3
