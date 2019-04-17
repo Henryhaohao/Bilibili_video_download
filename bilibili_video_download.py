@@ -1,31 +1,33 @@
 # !/usr/bin/python
 # -*- coding:utf-8 -*-
-# time: 2019/04/16--17:12
+# time: 2019/04/17--08:12
 __author__ = 'Henry'
 
 '''
 项目: B站视频下载
-思路:
-获取cid的api为 https://api.bilibili.com/x/web-interface/view?aid=47476691 aid后面为av号
-下载链接api为 https://api.bilibili.com/x/player/playurl?avid=44743619&cid=78328965&qn=32 cid为上面获取到的 avid为输入的av号 qn为视频质量
 '''
 
-import requests, time, urllib.request, re
+import requests, time, hashlib, urllib.request, re
 from moviepy.editor import *
 import os, sys
 
 
 # 访问API地址
-def get_play_list(aid, cid, quality):
-    url_api = 'https://api.bilibili.com/x/player/playurl?cid={}&avid={}&qn={}'.format(cid, aid, quality)
+def get_play_list(start_url, cid, quality):
+    entropy = 'rbMCKn@KuamXWlPMoJGsKcbiJKUfkPF_8dABscJntvqhRSETg'
+    appkey, sec = ''.join([chr(ord(i) + 2) for i in entropy[::-1]]).split(':')
+    params = 'appkey=%s&cid=%s&otype=json&qn=%s&quality=%s&type=' % (appkey, cid, quality, quality)
+    chksum = hashlib.md5(bytes(params + sec, 'utf8')).hexdigest()
+    url_api = 'https://interface.bilibili.com/v2/playurl?%s&sign=%s' % (params, chksum)
     headers = {
+        'Referer': start_url,  # 注意加上referer
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
     }
+    # print(url_api)
     html = requests.get(url_api, headers=headers).json()
-    video_list = []
-    for i in html['data']['durl']:
-        video_list.append(i['url'])
-    print(video_list)
+    # print(json.dumps(html))
+    video_list = [html['durl'][0]['url']]
+    # print(video_list)
     return video_list
 
 
@@ -119,13 +121,10 @@ def down_video(video_list, title, start_url, page):
             os.makedirs(currentVideoPath)
         # 开始下载
         if len(video_list) > 1:
-            urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}-{}.flv'.format(title, num)),
-                                       reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
+            urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}-{}.flv'.format(title, num)),reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
         else:
-            urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}.flv'.format(title)),
-                                       reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
+            urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}.flv'.format(title)),reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
         num += 1
-
 
 # 合并视频
 def combine_video(video_list, title):
@@ -162,26 +161,24 @@ if __name__ == '__main__':
     # 用户输入av号或者视频链接地址
     print('*' * 30 + 'B站视频下载小助手' + '*' * 30)
     start = input('请输入您要下载的B站av号或者视频链接地址:')
-    if start.isdigit() == True:
-        # 如果输入的是av号
+    if start.isdigit() == True:  # 如果输入的是av号
         # 获取cid的api, 传入aid即可
-        aid = start
-        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + aid
+        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + start
     else:
-        # 如果输入的是url (eg: https://www.bilibili.com/video/av46958874/)
-        aid = re.search(r'/av(\d+)/*', start).group(1)
-        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + aid
-    # qn参数就是视频清晰度
-    # 可选值：
-    # 80: 高清1080P
-    # 64: 高清720P
-    # 32: 清晰480P
-    # 16: 流畅360P
-    quality = input('请输入您要下载视频的清晰度(1080p:80;720p:64;480p:32;360p:16)(请填写80或64或32或16):')
+        # https://www.bilibili.com/video/av46958874/?spm_id_from=333.334.b_63686965665f7265636f6d6d656e64.16
+        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + re.search(r'/av(\d+)/*', start).group(1)
+
+    # 视频质量
+    # <accept_format><![CDATA[flv,flv720,flv480,flv360]]></accept_format>
+    # <accept_description><![CDATA[高清 1080P,高清 720P,清晰 480P,流畅 360P]]></accept_description>
+    # <accept_quality><![CDATA[80,64,32,16]]></accept_quality>
+    quality = input('请输入您要下载视频的清晰度(1080p:80;720p:64;480p:32;360p:16)(填写80或64或32或16):')
+
     # 获取视频的cid,title
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
     }
+
     html = requests.get(start_url, headers=headers).json()
     data = html['data']
     cid_list = data['pages']
@@ -193,7 +190,7 @@ if __name__ == '__main__':
         print('[下载视频的标题]:' + title)
         page = str(item['page'])
         start_url = start_url + "/?p=" + page
-        video_list = get_play_list(aid, cid, quality)
+        video_list = get_play_list(start_url, cid, quality)
         start_time = time.time()
         down_video(video_list, title, start_url, page)
         combine_video(video_list, title)
