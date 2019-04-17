@@ -11,13 +11,14 @@ Bilibili(b站)视频下载 ![enter image description here](Pic/logo.png)
 ## :dolphin:声明
 ### 软件均仅用于学习交流，请勿用于任何商业用途！感谢大家！
 ## :dolphin:介绍
+<<<<<<< Updated upstream
 ### 该项目为[Bilibili(b站)](https://www.bilibili.com/)视频下载(支持分P多段视频的下载!)
 - 项目介绍:通过传入B站av号或者视频链接地址下载视频
+=======
 ### 该项目为[Bilibili(b站)](https://www.bilibili.com/)视频下载
-- **项目介绍:通过传入B站av号或者视频链接地址下载视频(支持分P多段视频的下载!)**
-- **爬虫文件:**
-> **版本一: bilibili_video_download_v1.py - 加密API版,不需要加入cookie,直接即可下载1080p视频<br>**
-> **版本二: bilibili_video_download_v2.py - 无加密API版,但是需要加入登录后cookie中的SESSDATA字段,才可下载720p及以上视频；如果想下载1080p+视频,需要带入B站大会员的cookie中的SESSDATA才行,普通用户的SESSDATA最多只能下载1080p视频；请定期更换代码31行cookie中的SESSDATA值。跟换方法为：浏览器登录B站，在开发者模式(按F12) --> application --> cookie中找到SESSDATA值替换即可，一个月的有效期**
+- 项目介绍:通过传入B站av号或者视频链接地址下载视频(支持分P多段视频的下载!)
+>>>>>>> Stashed changes
+- 爬虫文件:Spiders目录下的bilibili_video_download.py
 ## :dolphin:运行环境
 Version: Python3
 ## :dolphin:安装依赖库
