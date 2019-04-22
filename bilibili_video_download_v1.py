@@ -8,9 +8,11 @@ __author__ = 'Henry'
 项目: B站视频下载
 
 版本1: 加密API版,不需要加入cookie,直接即可下载1080p视频
+
+20190422 - 增加多P视频单独下载其中一集的功能
 '''
 
-import requests, time, hashlib, urllib.request, re
+import requests, time, hashlib, urllib.request, re, json
 from moviepy.editor import *
 import os, sys
 
@@ -176,15 +178,21 @@ if __name__ == '__main__':
     # <accept_description><![CDATA[高清 1080P,高清 720P,清晰 480P,流畅 360P]]></accept_description>
     # <accept_quality><![CDATA[80,64,32,16]]></accept_quality>
     quality = input('请输入您要下载视频的清晰度(1080p:80;720p:64;480p:32;360p:16)(填写80或64或32或16):')
-
     # 获取视频的cid,title
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
     }
-
     html = requests.get(start_url, headers=headers).json()
     data = html['data']
-    cid_list = data['pages']
+    cid_list = []
+    if '?p=' in start:
+        # 单独下载分P视频中的一集
+        p = re.search(r'\?p=(\d+)',start).group(1)
+        cid_list.append(data['pages'][int(p) - 1])
+    else:
+        # 如果p不存在就是全集下载
+        cid_list = data['pages']
+    # print(cid_list)
     for item in cid_list:
         cid = str(item['cid'])
         title = item['part']
@@ -202,5 +210,6 @@ if __name__ == '__main__':
     currentVideoPath = os.path.join(sys.path[0], 'bilibili_video')  # 当前目录作为下载目录
     if (sys.platform.startswith('win')):
         os.startfile(currentVideoPath)
+
 
 # 分P视频下载测试: https://www.bilibili.com/video/av19516333/
