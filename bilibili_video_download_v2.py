@@ -16,6 +16,8 @@ API:
 注意:
 但是此接口headers需要加上登录后'Cookie': 'SESSDATA=3c5d20cf%2C1556704080%2C7dcd8c41' (30天的有效期)(因为现在只有登录后才能看到720P以上视频了)
 不然下载之后都是最低清晰度,哪怕选择了80也是只有480p的分辨率!!
+
+20190422 - 增加多P视频单独下载其中一集的功能
 '''
 
 import requests, time, urllib.request, re
@@ -197,7 +199,15 @@ if __name__ == '__main__':
     }
     html = requests.get(start_url, headers=headers).json()
     data = html['data']
-    cid_list = data['pages']
+    cid_list = []
+    if '?p=' in start:
+        # 单独下载分P视频中的一集
+        p = re.search(r'\?p=(\d+)', start).group(1)
+        cid_list.append(data['pages'][int(p) - 1])
+    else:
+        # 如果p不存在就是全集下载
+        cid_list = data['pages']
+    # print(cid_list)
     for item in cid_list:
         cid = str(item['cid'])
         title = item['part']
