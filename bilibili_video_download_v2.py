@@ -186,13 +186,15 @@ if __name__ == '__main__':
         start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + aid
     # qn参数就是视频清晰度
     # 可选值：
-    # 112: 高清1080P+ (hdflv2) (需要带入大会员的cookie中的SESSDATA才行,普通用户的SESSDATA最多只能下载1080p的视频)
+    # 116: 高清1080P60 (需要带入大会员的cookie中的SESSDATA才行,普通用户的SESSDATA最多只能下载1080p的视频)
+    # 112: 高清1080P+ (hdflv2) (需要大会员)
     # 80: 高清1080P (flv)
+    # 74: 高清720P60 (需要大会员)
     # 64: 高清720P (flv720)
     # 32: 清晰480P (flv480)
     # 16: 流畅360P (flv360)
-    print('请输入您要下载视频的清晰度(1080p+:112;1080p:80;720p:64;480p:32;360p:16; **注意:1080p+需要带入大会员的cookie中的SESSDATA才行,普通用户的SESSDATA最多只能下载1080p的视频):')
-    quality = input('请填写112或80或64或32或16:')
+    print('请输入您要下载视频的清晰度(1080p60:116;1080p+:112;1080p:80;720p60:74;720p:64;480p:32;360p:16; **注意:1080p+,1080p60,720p60都需要带入大会员的cookie中的SESSDATA才行,普通用户的SESSDATA最多只能下载1080p的视频):')
+    quality = input('请填写116或112或80或74或64或32或16:')
     # 获取视频的cid,title
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
