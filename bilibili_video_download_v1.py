@@ -184,7 +184,7 @@ if __name__ == '__main__':
     }
     html = requests.get(start_url, headers=headers).json()
     data = html['data']
-    vidio_title=data["title"].replace(" ","_")
+    video_title=data["title"].replace(" ","_")
     cid_list = []
     if '?p=' in start:
         # 单独下载分P视频中的一集
@@ -198,7 +198,7 @@ if __name__ == '__main__':
         cid = str(item['cid'])
         title = item['part']
         if not title:
-            title = vidio_title
+            title = video_title
         title = re.sub(r'[\/\\:*?"<>|]', '', title)  # 替换为空的
         print('[下载视频的cid]:' + cid)
         print('[下载视频的标题]:' + title)
