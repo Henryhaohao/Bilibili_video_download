@@ -11,6 +11,8 @@ __author__ = 'Henry'
 
 20190422 - 增加多P视频单独下载其中一集的功能
 '''
+import imageio
+imageio.plugins.ffmpeg.download()
 
 import requests, time, hashlib, urllib.request, re, json
 from moviepy.editor import *
