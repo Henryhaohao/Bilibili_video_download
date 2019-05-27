@@ -32,7 +32,7 @@ def get_play_list(aid, cid, quality):
     url_api = 'https://api.bilibili.com/x/player/playurl?cid={}&avid={}&qn={}'.format(cid, aid, quality)
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36',
-        'Cookie': 'SESSDATA=b693f4f2%2C1558063359%2Cfc41fa41', # 登录B站后复制一下cookie中的SESSDATA字段,有效期1个月
+        'Cookie': 'SESSDATA=aa15d6af%2C1560734457%2Ccc8ca251', # 登录B站后复制一下cookie中的SESSDATA字段,有效期1个月
         'Host': 'api.bilibili.com'
     }
     html = requests.get(url_api, headers=headers).json()
@@ -195,7 +195,7 @@ if __name__ == '__main__':
     # 64: 高清720P (flv720)
     # 32: 清晰480P (flv480)
     # 16: 流畅360P (flv360)
-    print('请输入您要下载视频的清晰度(1080p60:116;1080p+:112;1080p:80;720p60:74;720p:64;480p:32;360p:16; **注意:1080p+,1080p60,720p60都需要带入大会员的cookie中的SESSDATA才行,普通用户的SESSDATA最多只能下载1080p的视频):')
+    print('请输入您要下载视频的清晰度(1080p60:116;1080p+:112;1080p:80;720p60:74;720p:64;480p:32;360p:16; **注意:1080p+,1080p60,720p60,720p都需要带入大会员的cookie中的SESSDATA才行,普通用户的SESSDATA最多只能下载1080p的视频):')
     quality = input('请填写116或112或80或74或64或32或16:')
     # 获取视频的cid,title
     headers = {
