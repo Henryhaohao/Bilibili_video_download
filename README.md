@@ -25,8 +25,8 @@ Bilibili(b站)视频下载 ![enter image description here](Pic/logo.png)
 - **版本三: bilibili_video_download_v3.py**
   > **即版本二的升级版,为Threading多线程下载版本,下载速度大幅提升!**<br> 
 
-- **GUI版本：bilibili_video_download-GUI.py**
-  > **版本三基础上加入了图形界面<br>**
+- **版本四: GUI版本 - bilibili_video_download-GUI.py**
+  > **在版本三基础上加入图形界面,操作更加友好<br>**
 ## :dolphin:运行环境
 Version: Python3
 ## :dolphin:安装依赖库
@@ -36,13 +36,10 @@ pip3 install -r requirements.txt
 ## :dolphin:运行截图
 > - **运行下载**<br><br>
 ![enter image description here](Pic/run.png)
+> - **GUI图形界面**<br><br>  
+![](Pic/GUI-run.png)
 > - **下载完成**<br><br>
 ![enter image description here](Pic/video.png)
-> - **图形界面**<br><br>  
-![](Pic/GUI.png)  
-![](Pic/GUI-run.png)
 ## :dolphin:**总结**
 > **最后，如果你觉得这个项目不错或者对你有帮助，给个Star呗，也算是对我学习路上的一种鼓励！<br>
  哈哈哈，感谢大家！笔芯哟~**:cupid::cupid:
-
-
