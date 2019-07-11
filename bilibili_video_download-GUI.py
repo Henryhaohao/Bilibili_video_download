@@ -5,12 +5,11 @@ __author__ = 'Henry'
 
 
 '''
-项目: B站视频下载 - 多线程下载
-
+项目: B站视频下载 - GUI版本
 版本1: 加密API版,不需要加入cookie,直接即可下载1080p视频
-
 20190422 - 增加多P视频单独下载其中一集的功能
 20190702 - 增加视频多线程下载 速度大幅提升
+20190711 - 增加GUI版本,可视化界面,操作更加友好
 '''
 
 import requests, time, hashlib, urllib.request, re, json
