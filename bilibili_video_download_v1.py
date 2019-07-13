@@ -138,6 +138,8 @@ def down_video(video_list, title, start_url, page):
 # 合并视频
 def combine_video(video_list, title):
     currentVideoPath = os.path.join(sys.path[0], 'bilibili_video', title)  # 当前目录作为下载目录
+    if not os.path.exists(currentVideoPath):
+        os.makedirs(currentVideoPath)
     if len(video_list) >= 2:
         # 视频大于一段才要合并
         print('[下载完成,正在合并视频...]:' + title)
