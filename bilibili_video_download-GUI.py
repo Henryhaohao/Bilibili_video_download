@@ -147,6 +147,8 @@ def down_video(video_list, title, start_url, page):
 # 合并视频
 def combine_video(video_list, title):
     currentVideoPath = os.path.join(sys.path[0], 'bilibili_video', title)  # 当前目录作为下载目录
+    if not os.path.exists(currentVideoPath):
+        os.makedirs(currentVideoPath)
     if len(video_list) >= 2:
         # 视频大于一段才要合并
         print('[下载完成,正在合并视频...]:' + title)
@@ -230,7 +232,7 @@ def do_prepare(inputStart,inputQuality):
         th = threading.Thread(target=down_video, args=(video_list, title, start_url, page))
         # 将线程加入线程池
         threadpool.append(th)
-        combine_video(video_list, title)
+        
 
     # 开始线程
     for th in threadpool:
@@ -238,7 +240,8 @@ def do_prepare(inputStart,inputQuality):
     # 等待所有线程运行完毕
     for th in threadpool:
         th.join()
-
+    # 合并视频
+    combine_video(video_list, title)
     end_time = time.time()  # 结束时间
     print('下载总耗时%.2f秒,约%.2f分钟' % (end_time - start_time, int(end_time - start_time) / 60))
 
