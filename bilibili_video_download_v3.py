@@ -218,6 +218,8 @@ if __name__ == '__main__':
         th = threading.Thread(target=down_video, args=(video_list, title, start_url, page))
         # 将线程加入线程池
         threadpool.append(th)
+        # 合并视频
+        combine_video(video_list, title)
         
     # 开始线程
     for th in threadpool:
@@ -225,8 +227,7 @@ if __name__ == '__main__':
     # 等待所有线程运行完毕
     for th in threadpool:
         th.join()
-    # 合并视频
-    combine_video(video_list, title)
+    
     end_time = time.time()  # 结束时间
     print('下载总耗时%.2f秒,约%.2f分钟' % (end_time - start_time, int(end_time - start_time) / 60))
     # 如果是windows系统，下载完成后打开下载目录
