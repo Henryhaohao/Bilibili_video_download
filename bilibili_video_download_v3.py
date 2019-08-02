@@ -138,35 +138,34 @@ def down_video(video_list, title, start_url, page):
             urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}.flv'.format(title)),reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
         num += 1
 
-# 合并视频
-def combine_video(video_list, title):
-    currentVideoPath = os.path.join(sys.path[0], 'bilibili_video', title)  # 当前目录作为下载目录
-    if len(video_list) >= 2:
-        # 视频大于一段才要合并
-        print('[下载完成,正在合并视频...]:' + title)
-        # 定义一个数组
-        L = []
-        # 访问 video 文件夹 (假设视频都放在这里面)
-        root_dir = currentVideoPath
-        # 遍历所有文件
-        for file in sorted(os.listdir(root_dir), key=lambda x: int(x[x.rindex("-") + 1:x.rindex(".")])):
-            # 如果后缀名为 .mp4/.flv
-            if os.path.splitext(file)[1] == '.flv':
-                # 拼接成完整路径
-                filePath = os.path.join(root_dir, file)
-                # 载入视频
-                video = VideoFileClip(filePath)
-                # 添加到数组
-                L.append(video)
-        # 拼接视频
-        final_clip = concatenate_videoclips(L)
-        # 生成目标视频文件
-        final_clip.to_videofile(os.path.join(root_dir, r'{}.mp4'.format(title)), fps=24, remove_temp=False)
-        print('[视频合并完成]' + title)
-
-    else:
-        # 视频只有一段则直接打印下载完成
-        print('[视频合并完成]:' + title)
+# 合并视频(20190802新版)
+def combine_video(title_list):
+    video_path = os.path.join(sys.path[0], 'bilibili_video')  # 下载目录
+    for title in title_list:
+        current_video_path = os.path.join(video_path ,title)
+        if len(os.listdir(current_video_path)) >= 2:
+            # 视频大于一段才要合并
+            print('[下载完成,正在合并视频...]:' + title)
+            # 定义一个数组
+            L = []
+            # 遍历所有文件
+            for file in sorted(os.listdir(current_video_path), key=lambda x: int(x[x.rindex("-") + 1:x.rindex(".")])):
+                # 如果后缀名为 .mp4/.flv
+                if os.path.splitext(file)[1] == '.flv':
+                    # 拼接成完整路径
+                    filePath = os.path.join(current_video_path, file)
+                    # 载入视频
+                    video = VideoFileClip(filePath)
+                    # 添加到数组
+                    L.append(video)
+            # 拼接视频
+            final_clip = concatenate_videoclips(L)
+            # 生成目标视频文件
+            final_clip.to_videofile(os.path.join(current_video_path, r'{}.mp4'.format(title)), fps=24, remove_temp=False)
+            print('[视频合并完成]' + title)
+        else:
+            # 视频只有一段则直接打印下载完成
+            print('[视频合并完成]:' + title)
 
 
 if __name__ == '__main__':
@@ -203,12 +202,14 @@ if __name__ == '__main__':
     # print(cid_list)
     # 创建线程池
     threadpool = []
+    title_list = []
     for item in cid_list:
         cid = str(item['cid'])
         title = item['part']
         title = re.sub(r'[\/\\:*?"<>|]', '', title)  # 替换为空的
         print('[下载视频的cid]:' + cid)
         print('[下载视频的标题]:' + title)
+        title_list.append(title)
         page = str(item['page'])
         start_url = start_url + "/?p=" + page
         video_list = get_play_list(start_url, cid, quality)
@@ -218,8 +219,6 @@ if __name__ == '__main__':
         th = threading.Thread(target=down_video, args=(video_list, title, start_url, page))
         # 将线程加入线程池
         threadpool.append(th)
-        # 合并视频
-        combine_video(video_list, title)
         
     # 开始线程
     for th in threadpool:
@@ -227,6 +226,10 @@ if __name__ == '__main__':
     # 等待所有线程运行完毕
     for th in threadpool:
         th.join()
+    
+    # 最后合并视频
+    print(title_list)
+    combine_video(title_list)
     
     end_time = time.time()  # 结束时间
     print('下载总耗时%.2f秒,约%.2f分钟' % (end_time - start_time, int(end_time - start_time) / 60))
