@@ -199,7 +199,7 @@ if __name__ == '__main__':
         # 单独下载分P视频中的一集
         p = re.search(r'\?p=(\d+)',start).group(1)
         cid_list.append(data['pages'][int(p) - 1])
-    elif first not 0 and last not 0:
+    elif first != 0 and last != 0 and last >= first:
         for i in range(int(first), int(last)):
             cid_list.append(data['pages'][i-1])    
     else:
