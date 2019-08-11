@@ -180,6 +180,9 @@ if __name__ == '__main__':
         # https://www.bilibili.com/video/av46958874/?spm_id_from=333.334.b_63686965665f7265636f6d6d656e64.16
         start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + re.search(r'/av(\d+)/*', start).group(1)
 
+    first = input("please enter the first video number: ")
+    last = input("please enter the last video number: ")
+    
     # 视频质量
     # <accept_format><![CDATA[flv,flv720,flv480,flv360]]></accept_format>
     # <accept_description><![CDATA[高清 1080P,高清 720P,清晰 480P,流畅 360P]]></accept_description>
@@ -196,6 +199,9 @@ if __name__ == '__main__':
         # 单独下载分P视频中的一集
         p = re.search(r'\?p=(\d+)',start).group(1)
         cid_list.append(data['pages'][int(p) - 1])
+    elif first not 0 and last not 0:
+        for i in range(int(first), int(last)):
+            cid_list.append(data['pages'][i-1])    
     else:
         # 如果p不存在就是全集下载
         cid_list = data['pages']
