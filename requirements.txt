@@ -1,2 +1,2 @@
 moviepy==0.2.3.2
-requests==2.18.4
+requests==2.20.0
