@@ -18,7 +18,7 @@ from moviepy.editor import *
 import os, sys, threading
 
 import imageio
-imageio.plugins.ffmpeg.download()
+# imageio.plugins.ffmpeg.download()
 
 # 访问API地址
 def get_play_list(start_url, cid, quality):
@@ -132,10 +132,21 @@ def down_video(video_list, title, start_url, page):
         if not os.path.exists(currentVideoPath):
             os.makedirs(currentVideoPath)
         # 开始下载
-        if len(video_list) > 1:
-            urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}-{}.flv'.format(title, num)),reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
-        else:
-            urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}.flv'.format(title)),reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
+        downloadIsComplete = False
+        while not downloadIsComplete:
+            try:
+                if len(video_list) > 1:
+                    # 写成mp4也行  title + '-' + num + '.flv'
+                    urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}-{}.flv'.format(title, num)),
+                                               reporthook=Schedule_cmd)
+                else:
+                    urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}.flv'.format(title)),
+                                               reporthook=Schedule_cmd)
+                downloadIsComplete = True
+            except urllib.error.ContentTooShortError:
+                print(f"[{title}接收数据不完整，重新下载]")
+                time.sleep(3)
+                continue
         num += 1
 
 # 合并视频(20190802新版)
@@ -167,19 +178,35 @@ def combine_video(title_list):
             # 视频只有一段则直接打印下载完成
             print('[视频合并完成]:' + title)
 
+def BidToAid(Bid):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36'
+                      ' (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
+    }
+    url = "https://api.bilibili.com/x/web-interface/view?bvid=" + Bid
+    r = requests.get(url,headers=headers)
+    aid = json.loads(r.text)["data"]["aid"]
+    return aid
+
 
 if __name__ == '__main__':
     start_time = time.time()
     # 用户输入av号或者视频链接地址
     print('*' * 30 + 'B站视频下载小助手' + '*' * 30)
     start = input('请输入您要下载的B站av号或者视频链接地址:')
-    if start.isdigit() == True:  # 如果输入的是av号
+    if start.isdigit() == True or start.startswith("av"):  # 如果输入的是av号
         # 获取cid的api, 传入aid即可
-        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + start
+        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + start.replace("av", "")
+    elif start.startswith("BV"):
+        start_url = 'https://api.bilibili.com/x/web-interface/view?bvid=' + start.replace("BV", "")
     else:
-        # https://www.bilibili.com/video/av46958874/?spm_id_from=333.334.b_63686965665f7265636f6d6d656e64.16
-        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + re.search(r'/av(\d+)/*', start).group(1)
-
+        if "?p=" in start:
+            bid = start.split("?p=")[0].rsplit("/", 1)[-1]
+            page = start.split("?p=")[-1]
+            aid = BidToAid(bid)
+            start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + f"{aid}?p={page}"
+        else:
+            start_url = 'https://api.bilibili.com/x/web-interface/view?bvid=' + re.search(r'/BV(\S+)/*', start).group(1)
     # 视频质量
     # <accept_format><![CDATA[flv,flv720,flv480,flv360]]></accept_format>
     # <accept_description><![CDATA[高清 1080P,高清 720P,清晰 480P,流畅 360P]]></accept_description>
