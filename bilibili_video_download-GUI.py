@@ -14,7 +14,7 @@ __author__ = 'Henry'
 
 import requests, time, hashlib, urllib.request, re, json
 import imageio
-imageio.plugins.ffmpeg.download()
+# imageio.plugins.ffmpeg.download()
 from moviepy.editor import *
 import os, sys, threading
 
@@ -184,13 +184,17 @@ def do_prepare(inputStart,inputQuality):
     # 用户输入av号或者视频链接地址
     print('*' * 30 + 'B站视频下载小助手' + '*' * 30)
     start = inputStart
-    if start.isdigit() == True:  # 如果输入的是av号
+    if start.isdigit():  # 如果输入的是av号
         # 获取cid的api, 传入aid即可
         start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + start
+    elif start.find('/BV') > 0:
+    # https://www.bilibili.com/video/BV19W411s72F?p=9
+        start_url = 'https://api.bilibili.com/x/web-interface/view?bvid=' + re.search(r'/BV(\S+)\?',
+                                                                                      start).group(1)
     else:
         # https://www.bilibili.com/video/av46958874/?spm_id_from=333.334.b_63686965665f7265636f6d6d656e64.16
-        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + re.search(r'/av(\d+)/*', start).group(1)
-
+        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + re.search(r'/av(\d+)\?',
+                                                                                     start).group(1)
     # 视频质量
     # <accept_format><![CDATA[flv,flv720,flv480,flv360]]></accept_format>
     # <accept_description><![CDATA[高清 1080P,高清 720P,清晰 480P,流畅 360P]]></accept_description>

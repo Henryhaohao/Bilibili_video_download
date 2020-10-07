@@ -194,19 +194,14 @@ if __name__ == '__main__':
     # 用户输入av号或者视频链接地址
     print('*' * 30 + 'B站视频下载小助手' + '*' * 30)
     start = input('请输入您要下载的B站av号或者视频链接地址:')
-    if start.isdigit() == True or start.startswith("av"):  # 如果输入的是av号
+    if start.isdigit():  # 如果输入的是av号
         # 获取cid的api, 传入aid即可
-        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + start.replace("av", "")
-    elif start.startswith("BV"):
-        start_url = 'https://api.bilibili.com/x/web-interface/view?bvid=' + start.replace("BV", "")
+        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + start
+    elif start.find('/BV') > 0:
+        start_url = 'https://api.bilibili.com/x/web-interface/view?bvid=' + re.search(r'/BV(\S+)\?',
+                                                                                      start).group(1)
     else:
-        if "?p=" in start:
-            bid = start.split("?p=")[0].rsplit("/", 1)[-1]
-            page = start.split("?p=")[-1]
-            aid = BidToAid(bid)
-            start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + f"{aid}?p={page}"
-        else:
-            start_url = 'https://api.bilibili.com/x/web-interface/view?bvid=' + re.search(r'/BV(\S+)/*', start).group(1)
+        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + re.search(r'/av(\d+)\?', start).group(1)
     # 视频质量
     # <accept_format><![CDATA[flv,flv720,flv480,flv360]]></accept_format>
     # <accept_description><![CDATA[高清 1080P,高清 720P,清晰 480P,流畅 360P]]></accept_description>
