@@ -193,9 +193,12 @@ if __name__ == '__main__':
     if start.isdigit() == True:  # 如果输入的是av号
         # 获取cid的api, 传入aid即可
         start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + start
+    elif start.find('/BV') > 0:
+        # https://www.bilibili.com/video/BV19W411s72F?p=9
+        start_url = 'https://api.bilibili.com/x/web-interface/view?bvid=' + re.search(r'/BV(\S+)\?', start).group(1)
     else:
         # https://www.bilibili.com/video/av46958874/?spm_id_from=333.334.b_63686965665f7265636f6d6d656e64.16
-        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + re.search(r'/av(\d+)/*', start).group(1)
+        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + re.search(r'/av(\d+)\?', start).group(1)
 
     # 视频质量
     # <accept_format><![CDATA[flv,flv720,flv480,flv360]]></accept_format>
