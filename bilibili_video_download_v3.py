@@ -132,10 +132,18 @@ def down_video(video_list, title, start_url, page):
         if not os.path.exists(currentVideoPath):
             os.makedirs(currentVideoPath)
         # 开始下载
-        if len(video_list) > 1:
-            urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}-{}.flv'.format(title, num)),reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
-        else:
-            urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}.flv'.format(title)),reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
+        downloadIsComplete = False
+        while (downloadIsComplete == False):
+            try:
+                if len(video_list) > 1:
+                    urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}-{}.flv'.format(title, num)),reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
+                else:
+                    urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}.flv'.format(title)),reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
+                downloadIsComplete = True
+            except urllib.error.ContentTooShortError:
+                print("[接收数据不完整，重新下载]")
+                time.sleep(3)
+                continue
         num += 1
 
 # 合并视频(20190802新版)
