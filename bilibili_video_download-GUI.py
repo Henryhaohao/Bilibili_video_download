@@ -1,54 +1,49 @@
 # !/usr/bin/python
 # -*- coding:utf-8 -*-
-# time: 2019/07/02--08:12
+# time: 2019/07/21--20:12
 __author__ = 'Henry'
 
-
 '''
-项目: B站视频下载 - GUI版本
-版本1: 加密API版,不需要加入cookie,直接即可下载1080p视频
-20190422 - 增加多P视频单独下载其中一集的功能
-20190702 - 增加视频多线程下载 速度大幅提升
-20190711 - 增加GUI版本,可视化界面,操作更加友好
+项目: B站动漫番剧(bangumi)下载
+
+版本2: 无加密API版,但是需要加入登录后cookie中的SESSDATA字段,才可下载720p及以上视频
+
+API:
+1.获取cid的api为 https://api.bilibili.com/x/web-interface/view?aid=47476691 aid后面为av号
+2.下载链接api为 https://api.bilibili.com/x/player/playurl?avid=44743619&cid=78328965&qn=32 cid为上面获取到的 avid为输入的av号 qn为视频质量
+
+注意:
+但是此接口headers需要加上登录后'Cookie': 'SESSDATA=3c5d20cf%2C1556704080%2C7dcd8c41' (30天的有效期)(因为现在只有登录后才能看到720P以上视频了)
+不然下载之后都是最低清晰度,哪怕选择了80也是只有480p的分辨率!!
 '''
 
-import requests, time, hashlib, urllib.request, re, json
-import imageio
-imageio.plugins.ffmpeg.download()
+import requests, time, urllib.request, re
 from moviepy.editor import *
-import os, sys, threading
+import os, sys, threading, json
 
+import imageio
 
-
-from tkinter import *
-from tkinter import ttk
-from tkinter import StringVar
-root=Tk()
-start_time = time.time()
-
-# 将输出重定向到表格
-def print(theText):
-    msgbox.insert(END,theText+'\n')
+imageio.plugins.ffmpeg.download()
 
 
 # 访问API地址
-def get_play_list(start_url, cid, quality):
-    entropy = 'rbMCKn@KuamXWlPMoJGsKcbiJKUfkPF_8dABscJntvqhRSETg'
-    appkey, sec = ''.join([chr(ord(i) + 2) for i in entropy[::-1]]).split(':')
-    params = 'appkey=%s&cid=%s&otype=json&qn=%s&quality=%s&type=' % (appkey, cid, quality, quality)
-    chksum = hashlib.md5(bytes(params + sec, 'utf8')).hexdigest()
-    url_api = 'https://interface.bilibili.com/v2/playurl?%s&sign=%s' % (params, chksum)
+def get_play_list(aid, cid, quality):
+    url_api = 'https://api.bilibili.com/x/player/playurl?cid={}&avid={}&qn={}'.format(cid, aid, quality)
     headers = {
-        'Referer': start_url,  # 注意加上referer
-        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36',
+        'Cookie': 'SESSDATA=c4834e23%2C1573643322%2Ce4cbcba1',  # 登录B站后复制一下cookie中的SESSDATA字段,有效期1个月
+        'Host': 'api.bilibili.com'
     }
-    # print(url_api)
     html = requests.get(url_api, headers=headers).json()
-    # print(json.dumps(html))
+    # print(html)
+    # 当下载会员视频时,如果cookie中传入的不是大会员的SESSDATA时就会返回: {'code': -404, 'message': '啥都木有', 'ttl': 1, 'data': None}
+    if html['code'] != 0:
+        print('注意!当前集数为B站大会员专享,若想下载,Cookie中请传入大会员的SESSDATA')
+        return 'NoVIP'
     video_list = []
-    for i in html['durl']:
+    for i in html['data']['durl']:
         video_list.append(i['url'])
-    # print(video_list)
+    print(video_list)
     return video_list
 
 
@@ -69,12 +64,15 @@ def Schedule_cmd(blocknum, blocksize, totalsize):
     recv_size = blocknum * blocksize
 
     # 设置下载进度条
+    f = sys.stdout
     pervent = recv_size / totalsize
     percent_str = "%.2f%%" % (pervent * 100)
-    download.coords(fill_line1,(0,0,pervent*465,23))
-    root.update()
-    pct.set(percent_str)
-
+    n = round(pervent * 50)
+    s = ('*' * n).ljust(50, '-')
+    f.write(percent_str.ljust(8, ' ') + '[' + s + ']' + speed_str)
+    f.flush()
+    # time.sleep(0.1)
+    f.write('\r')
 
 
 def Schedule(blocknum, blocksize, totalsize):
@@ -88,11 +86,11 @@ def Schedule(blocknum, blocksize, totalsize):
     pervent = recv_size / totalsize
     percent_str = "%.2f%%" % (pervent * 100)
     n = round(pervent * 50)
-    s = ('#' * n).ljust(50, '-')
+    s = ('*' * n).ljust(50, '-')
     print(percent_str.ljust(6, ' ') + '-' + speed_str)
     f.flush()
     time.sleep(2)
-    # print('\r')
+    print('\r')
 
 
 # 字节bytes转化K\M\G
@@ -117,7 +115,7 @@ def format_size(bytes):
 #  下载视频
 def down_video(video_list, title, start_url, page):
     num = 1
-    print('[正在下载P{}段视频,请稍等...]:'.format(page) + title)
+    print('[正在下载第{}话视频,请稍等...]:'.format(page) + title)
     currentVideoPath = os.path.join(sys.path[0], 'bilibili_video', title)  # 当前目录作为下载目录
     for i in video_list:
         opener = urllib.request.build_opener()
@@ -132,6 +130,7 @@ def down_video(video_list, title, start_url, page):
             ('Referer', start_url),  # 注意修改referer,必须要加的!
             ('Origin', 'https://www.bilibili.com'),
             ('Connection', 'keep-alive'),
+
         ]
         urllib.request.install_opener(opener)
         # 创建文件夹存放下载的视频
@@ -139,16 +138,19 @@ def down_video(video_list, title, start_url, page):
             os.makedirs(currentVideoPath)
         # 开始下载
         if len(video_list) > 1:
-            urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}-{}.flv'.format(title, num)),reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
+            urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}-{}.flv'.format(title, num)),
+                                       reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
         else:
-            urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}.flv'.format(title)),reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
+            urllib.request.urlretrieve(url=i, filename=os.path.join(currentVideoPath, r'{}.flv'.format(title)),
+                                       reporthook=Schedule_cmd)  # 写成mp4也行  title + '-' + num + '.flv'
         num += 1
 
+
 # 合并视频(20190802新版)
-def combine_video(title_list):
-    video_path = os.path.join(sys.path[0], 'bilibili_video')  # 下载目录
+def combine_video(title_list, sub_dir):
+    video_path = os.path.join(sys.path[0], 'bilibili_video', sub_dir)  # 下载目录
     for title in title_list:
-        current_video_path = os.path.join(video_path ,title)
+        current_video_path = os.path.join(video_path, title)
         if len(os.listdir(current_video_path)) >= 2:
             # 视频大于一段才要合并
             print('[下载完成,正在合并视频...]:' + title)
@@ -167,69 +169,90 @@ def combine_video(title_list):
             # 拼接视频
             final_clip = concatenate_videoclips(L)
             # 生成目标视频文件
-            final_clip.to_videofile(os.path.join(current_video_path, r'{}.mp4'.format(title)), fps=24, remove_temp=False)
+            final_clip.to_videofile(os.path.join(current_video_path, r'{}.flv'.format(title)), fps=60,
+                                    remove_temp=False)
             print('[视频合并完成]' + title)
         else:
             # 视频只有一段则直接打印下载完成
             print('[视频合并完成]:' + title)
 
-def do_prepare(inputStart,inputQuality):
-    # 清空进度条
-    download.coords(fill_line1,(0,0,0,23))
-    pct.set('0.00%')
-    root.update()
-    # 清空文本栏
-    msgbox.delete('1.0','end')
-    start_time = time.time()
-    # 用户输入av号或者视频链接地址
-    print('*' * 30 + 'B站视频下载小助手' + '*' * 30)
-    start = inputStart
-    if start.isdigit() == True:  # 如果输入的是av号
-        # 获取cid的api, 传入aid即可
-        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + start
-    else:
-        # https://www.bilibili.com/video/av46958874/?spm_id_from=333.334.b_63686965665f7265636f6d6d656e64.16
-        start_url = 'https://api.bilibili.com/x/web-interface/view?aid=' + re.search(r'/av(\d+)/*', start).group(1)
 
-    # 视频质量
-    # <accept_format><![CDATA[flv,flv720,flv480,flv360]]></accept_format>
-    # <accept_description><![CDATA[高清 1080P,高清 720P,清晰 480P,流畅 360P]]></accept_description>
-    # <accept_quality><![CDATA[80,64,32,16]]></accept_quality>
-    quality = inputQuality
-    # 获取视频的cid,title
+if __name__ == '__main__':
+    start_time = time.time()
+    # 用户输入番剧完整链接地址
+    # 1. https://www.bilibili.com/bangumi/play/ep267692 (用带ep链接)
+    # 2. https://www.bilibili.com/bangumi/play/ss26878  (不要用这个ss链接,epinfo的aid会变成'-1')
+    print('*' * 30 + 'B站番剧视频下载小助手' + '*' * 30)
+    print('[提示]: 1.如果您想下载720P60,1080p+,1080p60质量的视频,请将35行代码中的SESSDATA改成你登录大会员后得到的SESSDATA,普通用户的SESSDATA最多只能下载1080p的视频')
+    print('       2.若发现下载的视频质量在720p以下,请将35行代码中的SESSDATA改成你登录后得到的SESSDATA(有效期一个月),而失效的SESSDATA就只能下载480p的视频')
+
+    start = input('请输入您要下载的B站番剧的完整链接地址(例如:https://www.bilibili.com/bangumi/play/ep267692):')
+    ep_url = start
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
     }
-    html = requests.get(start_url, headers=headers).json()
-    data = html['data']
-    cid_list = []
-    if '?p=' in start:
-        # 单独下载分P视频中的一集
-        p = re.search(r'\?p=(\d+)',start).group(1)
-        cid_list.append(data['pages'][int(p) - 1])
+    html = requests.get(ep_url, headers=headers).text
+    # print(html)
+    ep_info = re.search(r'INITIAL_STATE__=(.*?"]});', html).group(1)
+    # print(ep_info)
+    ep_info = json.loads(ep_info)
+    print('您将要下载的番剧名为:' + ep_info['mediaInfo']['title'])  # 字段格式太不统一了
+    y = input('请输入1或2 - 1.只下载当前一集 2.下载此番剧的全集:')
+    # 1.如果只下载当前ep
+    id_list = []
+    if y == '1':
+        try:
+            id_list.append([ep_info['mediaInfo']['title'], ep_info['epInfo']['aid'], ep_info['epInfo']['cid'],
+                            ep_info['epInfo']['titleFormat'] + ' ' + ep_info['epInfo']['longTitle']])
+        except:
+            id_list.append([ep_info['mediaInfo']['title'], ep_info['epInfo']['aid'], ep_info['epInfo']['cid'],
+                            '第' + str(ep_info['epInfo']['index']) + '话 ' + ep_info['epInfo']['index_title']])
+    # 2.下载此番剧全部ep
     else:
-        # 如果p不存在就是全集下载
-        cid_list = data['pages']
-    # print(cid_list)
-    # 创建线程池
+        for i in ep_info['epList']:
+            # if i['badge'] == '': # 当badge字段为'会员'时,接口返回404
+            try:
+                id_list.append([ep_info['mediaInfo']['title'], i['aid'], i['cid'],
+                                i['titleFormat'] + ' ' + i['longTitle']])
+            except:
+                id_list.append([ep_info['mediaInfo']['title'], i['aid'], i['cid'],
+                                '第' + str(i['index']) + '话 ' + i['index_title']])
+
+    # qn参数就是视频清晰度
+    # 可选值：
+    # 116: 高清1080P60 (需要带入大会员的cookie中的SESSDATA才行,普通用户的SESSDATA最多只能下载1080p的视频,不带入SESSDATA就只能下载480p的)
+    # 112: 高清1080P+ (hdflv2) (需要大会员)
+    # 80: 高清1080P (flv)
+    # 74: 高清720P60 (需要大会员)
+    # 64: 高清720P (flv720)
+    # 32: 清晰480P (flv480)
+    # 16: 流畅360P (flv360)
+    print(
+        '请输入您要下载视频的清晰度(1080p60:116;1080p+:112;1080p:80;720p60:74;720p:64;480p:32;360p:16; **注意:1080p+,1080p60,720p60都需要带入大会员的cookie中的SESSDATA才行,普通用户的SESSDATA最多只能下载1080p的视频):')
+    quality = input('请输入116或112或80或74或64或32或16:')
     threadpool = []
     title_list = []
-    for item in cid_list:
-        cid = str(item['cid'])
-        title = item['part']
+    page = 1
+    print(id_list)
+    for item in id_list:
+        if not (os.path.exists(os.path.join(sys.path[0], 'bilibili_video', item[0]))):
+            os.makedirs(os.path.join(sys.path[0], 'bilibili_video', item[0]))
+        aid = str(item[1])
+        cid = str(item[2])
+        title = item[3]
         title = re.sub(r'[\/\\:*?"<>|]', '', title)  # 替换为空的
-        print('[下载视频的cid]:' + cid)
-        print('[下载视频的标题]:' + title)
+        print('[下载番剧标题]:' + title)
         title_list.append(title)
-        page = str(item['page'])
-        start_url = start_url + "/?p=" + page
-        video_list = get_play_list(start_url, cid, quality)
+        start_url = ep_url
+        video_list = get_play_list(aid, cid, quality)
         start_time = time.time()
         # down_video(video_list, title, start_url, page)
         # 定义线程
-        th = threading.Thread(target=down_video, args=(video_list, title, start_url, page))
-        # 将线程加入线程池
-        threadpool.append(th)
+        if video_list != 'NoVIP':
+            th = threading.Thread(target=down_video, args=(video_list, title, start_url, page))
+            # 将线程加入线程池
+            threadpool.append(th)
+        page += 1
 
     # 开始线程
     for th in threadpool:
@@ -237,74 +260,16 @@ def do_prepare(inputStart,inputQuality):
     # 等待所有线程运行完毕
     for th in threadpool:
         th.join()
-    
+
     # 最后合并视频
-    combine_video(title_list)
+    print(title_list)
+    combine_video(title_list, ep_info['mediaInfo']['title'])
 
     end_time = time.time()  # 结束时间
     print('下载总耗时%.2f秒,约%.2f分钟' % (end_time - start_time, int(end_time - start_time) / 60))
-
     # 如果是windows系统，下载完成后打开下载目录
     currentVideoPath = os.path.join(sys.path[0], 'bilibili_video')  # 当前目录作为下载目录
     if (sys.platform.startswith('win')):
         os.startfile(currentVideoPath)
 
-
-
-def thread_it(func, *args):
-    '''将函数打包进线程'''
-    # 创建
-    t = threading.Thread(target=func, args=args) 
-    # 守护 !!!
-    t.setDaemon(True) 
-    # 启动
-    t.start()
-
-
-if __name__ == "__main__":
-    # 设置标题
-    root.title('B站视频下载小助手-GUI')
-    # 设置ico
-    root.iconbitmap('./Pic/favicon.ico')
-    # 设置Logo
-    photo = PhotoImage(file='./Pic/logo.png')
-    logo = Label(root,image=photo)
-    logo.pack()
-    # 各项输入栏和选择框
-    inputStart = Entry(root,bd=4,width=600)
-    labelStart=Label(root,text="请输入您要下载的B站av号或者视频链接地址:") # 地址输入
-    labelStart.pack(anchor="w")
-    inputStart.pack()
-    labelQual = Label(root,text="请选择您要下载视频的清晰度") # 清晰度选择
-    labelQual.pack(anchor="w")
-    inputQual = ttk.Combobox(root,state="readonly")
-    # 可供选择的表
-    inputQual['value']=('1080P','720p','480p','360p')
-    # 对应的转换字典
-    keyTrans=dict()
-    keyTrans['1080P']='80'
-    keyTrans['720p']='64'
-    keyTrans['480p']='32'
-    keyTrans['360p']='16'
-    # 初始值为720p
-    inputQual.current(1)
-    inputQual.pack()
-    confirm = Button(root,text="开始下载",command=lambda:thread_it(do_prepare,inputStart.get(), keyTrans[inputQual.get()] ))
-    msgbox = Text(root)
-    msgbox.insert('1.0',"对于单P视频:直接传入B站av号或者视频链接地址\n(eg: 49842011或者https://www.bilibili.com/video/av49842011)\n对于多P视频:\n1.下载全集:直接传入B站av号或者视频链接地址\n(eg: 49842011或者https://www.bilibili.com/video/av49842011)\n2.下载其中一集:传入那一集的视频链接地址\n(eg: https://www.bilibili.com/video/av19516333/?p=2)")
-    msgbox.pack()
-    download=Canvas(root,width=465,height=23,bg="white")
-    # 进度条的设置
-    labelDownload=Label(root,text="下载进度")
-    labelDownload.pack(anchor="w")
-    download.pack()
-    fill_line1 = download.create_rectangle(0, 0, 0, 23, width=0, fill="green")
-    pct=StringVar()
-    pct.set('0.0%')
-    pctLabel = Label(root,textvariable=pct)
-    pctLabel.pack()
-    root.geometry("600x800")
-    confirm.pack()
-    # GUI主循环
-    root.mainloop()
-    
+# 番剧视频下载测试: https://www.bilibili.com/bangumi/play/ep269828

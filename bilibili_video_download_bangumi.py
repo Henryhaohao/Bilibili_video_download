@@ -3,7 +3,6 @@
 # time: 2019/07/21--20:12
 __author__ = 'Henry'
 
-
 '''
 项目: B站动漫番剧(bangumi)下载
 
@@ -23,14 +22,16 @@ from moviepy.editor import *
 import os, sys, threading, json
 
 import imageio
+
 imageio.plugins.ffmpeg.download()
+
 
 # 访问API地址
 def get_play_list(aid, cid, quality):
     url_api = 'https://api.bilibili.com/x/player/playurl?cid={}&avid={}&qn={}'.format(cid, aid, quality)
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36',
-        'Cookie': 'SESSDATA=75a75cf2%2C1564669876%2Cb7c7b171', # 登录B站后复制一下cookie中的SESSDATA字段,有效期1个月
+        'Cookie': 'SESSDATA=3c5d20cf%2C1556704080%2C7dcd8c41',  # 登录B站后复制一下cookie中的SESSDATA字段,有效期1个月
         'Host': 'api.bilibili.com'
     }
     html = requests.get(url_api, headers=headers).json()
@@ -67,7 +68,7 @@ def Schedule_cmd(blocknum, blocksize, totalsize):
     pervent = recv_size / totalsize
     percent_str = "%.2f%%" % (pervent * 100)
     n = round(pervent * 50)
-    s = ('#' * n).ljust(50, '-')
+    s = ('*' * n).ljust(50, '-')
     f.write(percent_str.ljust(8, ' ') + '[' + s + ']' + speed_str)
     f.flush()
     # time.sleep(0.1)
@@ -85,11 +86,11 @@ def Schedule(blocknum, blocksize, totalsize):
     pervent = recv_size / totalsize
     percent_str = "%.2f%%" % (pervent * 100)
     n = round(pervent * 50)
-    s = ('#' * n).ljust(50, '-')
+    s = ('*' * n).ljust(50, '-')
     print(percent_str.ljust(6, ' ') + '-' + speed_str)
     f.flush()
     time.sleep(2)
-    # print('\r')
+    print('\r')
 
 
 # 字节bytes转化K\M\G
@@ -146,10 +147,10 @@ def down_video(video_list, title, start_url, page):
 
 
 # 合并视频(20190802新版)
-def combine_video(title_list):
-    video_path = os.path.join(sys.path[0], 'bilibili_video')  # 下载目录
+def combine_video(title_list, sub_dir):
+    video_path = os.path.join(sys.path[0], sub_dir, 'bilibili_video')  # 下载目录
     for title in title_list:
-        current_video_path = os.path.join(video_path ,title)
+        current_video_path = os.path.join(video_path, title)
         if len(os.listdir(current_video_path)) >= 2:
             # 视频大于一段才要合并
             print('[下载完成,正在合并视频...]:' + title)
@@ -168,7 +169,8 @@ def combine_video(title_list):
             # 拼接视频
             final_clip = concatenate_videoclips(L)
             # 生成目标视频文件
-            final_clip.to_videofile(os.path.join(current_video_path, r'{}.mp4'.format(title)), fps=24, remove_temp=False)
+            final_clip.to_videofile(os.path.join(current_video_path, r'{}.flv'.format(title)), fps=60,
+                                    remove_temp=False)
             print('[视频合并完成]' + title)
         else:
             # 视频只有一段则直接打印下载完成
@@ -189,30 +191,32 @@ if __name__ == '__main__':
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'
     }
-    html = requests.get(ep_url,headers=headers).text
+    html = requests.get(ep_url, headers=headers).text
+    # print(html)
     ep_info = re.search(r'INITIAL_STATE__=(.*?"]});', html).group(1)
     # print(ep_info)
     ep_info = json.loads(ep_info)
-    # print('您将要下载的番剧名为:' + ep_info['mediaInfo']['title']) # 字段格式太不统一了
+    print('您将要下载的番剧名为:' + ep_info['mediaInfo']['title'])  # 字段格式太不统一了
     y = input('请输入1或2 - 1.只下载当前一集 2.下载此番剧的全集:')
     # 1.如果只下载当前ep
     id_list = []
     if y == '1':
         try:
-            id_list.append([ep_info['epInfo']['aid'], ep_info['epInfo']['cid'],
+            id_list.append([ep_info['mediaInfo']['title'], ep_info['epInfo']['aid'], ep_info['epInfo']['cid'],
                             ep_info['epInfo']['titleFormat'] + ' ' + ep_info['epInfo']['longTitle']])
         except:
-            id_list.append([ep_info['epInfo']['aid'], ep_info['epInfo']['cid'],
+            id_list.append([ep_info['mediaInfo']['title'], ep_info['epInfo']['aid'], ep_info['epInfo']['cid'],
                             '第' + str(ep_info['epInfo']['index']) + '话 ' + ep_info['epInfo']['index_title']])
     # 2.下载此番剧全部ep
     else:
         for i in ep_info['epList']:
             # if i['badge'] == '': # 当badge字段为'会员'时,接口返回404
             try:
-                id_list.append([i['aid'], i['cid'],
+                id_list.append([ep_info['mediaInfo']['title'], i['aid'], i['cid'],
                                 i['titleFormat'] + ' ' + i['longTitle']])
             except:
-                id_list.append([i['aid'], i['cid'],'第' + str(i['index']) + '话 ' + i['index_title']])
+                id_list.append([ep_info['mediaInfo']['title'], i['aid'], i['cid'],
+                                '第' + str(i['index']) + '话 ' + i['index_title']])
 
     # qn参数就是视频清晰度
     # 可选值：
@@ -223,16 +227,19 @@ if __name__ == '__main__':
     # 64: 高清720P (flv720)
     # 32: 清晰480P (flv480)
     # 16: 流畅360P (flv360)
-    print('请输入您要下载视频的清晰度(1080p60:116;1080p+:112;1080p:80;720p60:74;720p:64;480p:32;360p:16; **注意:1080p+,1080p60,720p60都需要带入大会员的cookie中的SESSDATA才行,普通用户的SESSDATA最多只能下载1080p的视频):')
+    print(
+        '请输入您要下载视频的清晰度(1080p60:116;1080p+:112;1080p:80;720p60:74;720p:64;480p:32;360p:16; **注意:1080p+,1080p60,720p60都需要带入大会员的cookie中的SESSDATA才行,普通用户的SESSDATA最多只能下载1080p的视频):')
     quality = input('请输入116或112或80或74或64或32或16:')
     threadpool = []
     title_list = []
     page = 1
     print(id_list)
     for item in id_list:
-        aid = str(item[0])
-        cid = str(item[1])
-        title = item[2]
+        if not (os.path.exists(os.path.join(sys.path[0], 'bilibili_video', item[0]))):
+            os.makedirs(os.path.join(sys.path[0], 'bilibili_video', item[0]))
+        aid = str(item[1])
+        cid = str(item[2])
+        title = item[3]
         title = re.sub(r'[\/\\:*?"<>|]', '', title)  # 替换为空的
         print('[下载番剧标题]:' + title)
         title_list.append(title)
@@ -253,17 +260,16 @@ if __name__ == '__main__':
     # 等待所有线程运行完毕
     for th in threadpool:
         th.join()
-    
+
     # 最后合并视频
     print(title_list)
-    combine_video(title_list)
-    
+    combine_video(title_list, ep_info['mediaInfo']['title'])
+
     end_time = time.time()  # 结束时间
     print('下载总耗时%.2f秒,约%.2f分钟' % (end_time - start_time, int(end_time - start_time) / 60))
     # 如果是windows系统，下载完成后打开下载目录
     currentVideoPath = os.path.join(sys.path[0], 'bilibili_video')  # 当前目录作为下载目录
     if (sys.platform.startswith('win')):
         os.startfile(currentVideoPath)
-
 
 # 番剧视频下载测试: https://www.bilibili.com/bangumi/play/ep269828
